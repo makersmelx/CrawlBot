@@ -170,25 +170,7 @@ bot.on('/eatwaht', msg => {
     }
 });
 
-bot.on(/\/addplace .*/,msg => {
-    if(mode){
-        let newPlace = msg.text.slice(10);
-        if(!jsonData.find(function(value,index,arr){
-            return value.name == newPlace;
-        }))
-        {
-            jsonData.push({"name":newPlace,"times":"0"});
-            //console.log(jsonData);
-            saveJSON(restaurantList,jsonData);
-            return bot.sendMessage(group_id,`${ newPlace }, 这个新地方\ud83d\udc74\ud83c\udffb记住了`);
-        }
-        else{
-            return bot.sendMessage(group_id,"有这地了");
-        }
-    }
-})
-
-bot.on(/\/addplace@Jianghbot .*/,msg => {
+bot.on(/^\/addplace(@Jianghbot)?$/,msg => {
     if(mode){
         let newPlace = msg.text.slice(10);
         if(!jsonData.find(function(value,index,arr){
