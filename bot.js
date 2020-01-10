@@ -28,11 +28,14 @@ const minus = (jsonData) =>{
 }
 
 //emoji
-var whit_slim_ye = '\ud83d\udc68\ud83c\udffb\u200d\ud83e\uddb3'
-
+const random_ye = ()=>{
+    var ye_emoji = ['\ud83d\udc68\ud83c\udffb\u200d\ud83e\uddb3','\ud83d\udc74\ud83c\udffb','\ud83d\udc74','\ud83d\udc74\ud83c\udffc','\ud83d\udc74\ud83c\udffd','\ud83d\udc74\ud83c\udffe','\ud83d\udc74\ud83c\udfff'];
+    let x = Math.floor(Math.random()*ye_emoji.length);
+    return ye_emoji[x];
+}
 // Boot up
 var mode = 1;
-bot.sendMessage(group_id,`${ whit_slim_ye }启动了，快点给${ whit_slim_ye }爬`);
+bot.sendMessage(group_id,`${ random_ye() }启动了，快点给${ random_ye() }爬`);
 
 var jsonData = require('./database/restaurants.json');
 if(!jsonData){
@@ -43,21 +46,21 @@ if(!jsonData){
 bot.on('/start',msg => {
     if(!mode){
         mode = true;
-        return bot.sendMessage(group_id,"爷醒了");
+        return bot.sendMessage(group_id,`${ random_ye() }醒了`);
     }
     else if (mode == 1){
         return bot.sendMessage(group_id,"cnm，干什么");
     }
     else if(mode == 2){
         mode = 1;
-        return bot.sendMessage(group_id,"歇了，爷正常聊天");
+        return bot.sendMessage(group_id,`歇了，${ random_ye() }正常聊天`);
     }
 });
 
 bot.on('/end',msg => {
     if(mode){
         mode = 0;
-        return bot.sendMessage(group_id,"爷睡了");
+        return bot.sendMessage(group_id,`${ random_ye() }睡了`);
     }
     else{
         return bot.sendMessage(group_id,"zzz");
@@ -67,7 +70,7 @@ bot.on('/end',msg => {
 
 bot.on('/wxhmode',msg =>{
     if(!mode){
-        return bot.sendMessage(group_id,"爷累了，不许嘴臭");
+        return bot.sendMessage(group_id,`${ random_ye() }累了，不许嘴臭`);
     }
     else if(mode == 1){
         mode = 2;
@@ -114,7 +117,7 @@ bot.on(/^[^/].*/, msg => {
         var relpyFormat = [`${ text }个几把`,`不许${ text }`];
 
         //parse
-        var specialReg = [/.*不许.*/,/.*(\ud83c[\udf00-\udfff])|(\ud83d[\udc00-\ude4f\ude80-\udeff])|[\u2600-\u2B55].*/];
+        var specialReg = [/.*不许.*/,/(^.*)((\ud83c[\udf00-\udfff])|(\ud83d[\udc00-\ude4f\ude80-\udeff])|[\u2600-\u2B55]).*/];
 
         //reply
         //bot.sendMessage(group_id,`Current mode is ${ mode }`);
@@ -170,9 +173,12 @@ bot.on('/eatwaht', msg => {
     }
 });
 
-bot.on(/^\/addplace(@Jianghbot)?$/,msg => {
+bot.on(/^\/addplace(@Jianghbot)?.*$/,msg => {
     if(mode){
-        let newPlace = msg.text.slice(10);
+        let rawData = msg.text;
+        let splitData = rawData.split(" ",2);
+        console.log(splitData);
+        let newPlace =  splitData[1];
         if(!jsonData.find(function(value,index,arr){
             return value.name == newPlace;
         }))
@@ -180,7 +186,7 @@ bot.on(/^\/addplace(@Jianghbot)?$/,msg => {
             jsonData.push({"name":newPlace,"times":"0"});
             //console.log(jsonData);
             saveJSON(restaurantList,jsonData);
-            return bot.sendMessage(group_id,`${ newPlace }, 这个新地方\ud83d\udc74\ud83c\udffb记住了`);
+            return bot.sendMessage(group_id,`${ newPlace }, 这个新地方${ random_ye() }记住了`);
         }
         else{
             return bot.sendMessage(group_id,"有这地了");
