@@ -2,11 +2,11 @@
 If you are the group member, contact me for .env file.
 
 ## Setup
-~~~
+```
 npm install
-~~
+```
 
 ## Run
-~~~
+```
 npm run release
-~~~
+```
