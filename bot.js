@@ -267,9 +267,15 @@ bot.on(/^\/zhenghuo(@Jianghbot)?.*$/,msg => {
             return value.name == splitData[1] && value.content == splitData[2];
         }))
         {
-            sentenceCache.push({"name":splitData[1],"content":splitData[2]});
-            saveJSON(sentenceList,sentenceCache);
-            return bot.sendMessage(group_id,`整挺好, ${ random_ye() }下回出来迫害`);
+            if (splitData[1] && splitData[2]) {
+                sentenceCache.push({"name":splitData[1],"content":splitData[2]});
+                saveJSON(sentenceList,sentenceCache);
+                return bot.sendMessage(group_id,`整挺好, ${ random_ye() }下回出来迫害`);
+            }
+            else {
+                return bot.sendMessage(group_id,`你发的什么鸡掰, 给${ random_ye() }说人话`);
+            }
+           
         }
         else{
             return bot.sendMessage(group_id,`妈的多老的东西了，你还让${ random_ye() }学`);
