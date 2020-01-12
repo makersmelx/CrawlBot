@@ -10,9 +10,43 @@ const bot = new TeleBot({
     }
 });
 
+//嘴臭api
+var normal = process.env.KOU_TU_LIAN_HUA;
+var fire = process.env.HUO_LI_QUAN_KAI;
+
+const requestZanghua = () => {
+    var request = require('request');
+    if (Math.random() < 0.3) {
+        request(fire, function (err, response, content) {
+            if (err) {
+                console.log("Failure.");
+            }
+            else {
+                return bot.sendMessage(group_id, content);
+            }
+        })
+    }  
+    else {
+        request(normal, function (err, response, content) {
+            if (err) {
+                console.log("Failure.");
+            }
+            else {
+                return bot.sendMessage(group_id, content);
+            }
+        })
+    }
+}
+
+const sendPic = (msg) => {
+    let decision = Math.floor(Math.random()*picUrlCache.length);
+    return msg.reply.photo(picUrlCache[decision].url);
+}
+
 var restaurantList = './database/restaurants.json';
 var sentenceList = './database/sentence.json';
 var configFile = './config.json';
+var picUrlFile = './database/picUrl.json'
 
 //save json
 const saveJSON = (filename, restaurantCache) =>{
@@ -32,6 +66,7 @@ const minus = (restaurantCache) =>{
     }
     saveJSON(restaurantList,restaurantCache);
 }
+
 
 //emoji
 const random_ye = ()=>{
@@ -61,6 +96,11 @@ if(!restaurantCache){
 var sentenceCache = require('./database/sentence.json');
 if(!sentenceCache){
     bot.sendMessage(group_id,`${ random_ye() }语录呢？`)
+}
+
+var picUrlCache = require(picUrlFile);
+if (!picUrlCache) {
+    bot.sendMessage(group_id,`没表情包, ${ random_ye() }歇了`)
 }
 
 // mode swtich
@@ -157,10 +197,14 @@ bot.on(/^[^/].*/, msg => {
         var relpyFormat = [`${ text }个几把`,`不许${ text }`];
 
         //parse
-        var specialReg = [/.*不许.*/,/(^.*)((\ud83c[\udf00-\udfff])|(\ud83d[\udc00-\ude4f\ude80-\udeff])|[\u2600-\u2B55]).*/];
-
+        var specialReg = [/.*不许.*/, /(^.*)((\ud83c[\udf00-\udfff])|(\ud83d[\udc00-\ude4f\ude80-\udeff])|[\u2600-\u2B55]).*/];
+    
         //reply
-        if((x < probability) || (mode == 2)){
+        if ((x < probability) || (mode == 2)) {
+            if (Math.random() < 0.4) {
+                return requestZanghua();
+            }
+
             let choices = 2;
             let final = Math.floor(Math.random()*choices);
             //let special = 0;
@@ -187,6 +231,9 @@ bot.on(/^[^/].*/, msg => {
         else if (x < 3 * probability) {
             return bot.sendMessage(group_id, `有一说一，确实`);
         }
+        else if (x < 4 * probability) {
+            return sendPic(msg);
+        }
         
     }
     lastTalk.times = tmp;
@@ -194,10 +241,6 @@ bot.on(/^[^/].*/, msg => {
 });
 
 bot.on('sticker', msg => {
-    //console.log(msg);
-    // console.log(restaurantCache.find(function(value,index,arr){
-    //     return value.name == "41212";
-    // }))
     if (mode) {
         let probability = configCache.probability;
         let x = Math.floor(Math.random()*100);
@@ -262,13 +305,13 @@ bot.on('/eatplace',msg=>{
 bot.on(/^\/zhenghuo(@Jianghbot)?.*$/,msg => {
     if(mode){
         let rawData = msg.text;
-        let splitData = rawData.split(" ",3);
+        let splitData = rawData.split(" ",2);
         if(!sentenceCache.find(function(value,index,arr){
-            return value.name == splitData[1] && value.content == splitData[2];
+            return value.content == splitData[1];
         }))
         {
-            if (splitData[1] && splitData[2]) {
-                sentenceCache.push({"name":splitData[1],"content":splitData[2]});
+            if (splitData[1]) {
+                sentenceCache.push({"content":splitData[1]});
                 saveJSON(sentenceList,sentenceCache);
                 return bot.sendMessage(group_id,`整挺好, ${ random_ye() }下回出来迫害`);
             }
@@ -309,11 +352,15 @@ bot.on(/^\/setprob(@Jianghbot)?.*$/,msg => {
 })
 
 bot.on('/checkprob', msg => {
-    let displayContent = `Current probability: ${configCache.probability}.\n实际互动强度为: ${3 * configCache.probability}\n`;
+    let displayContent = `Current probability: ${configCache.probability}.\n实际互动强度为: ${4 * configCache.probability}\n`;
     if (configCache.probability > 10) {
         displayContent += `\nお知らせ：現在、${random_ye()}の活動確率か高いで、ご注意ください`
     }
     return bot.sendMessage(group_id, displayContent);
+})
+
+bot.on('/hello', msg => {
+    return requestZanghua();
 })
 
 bot.start();
