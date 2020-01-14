@@ -144,27 +144,10 @@ bot.on('/wxhmode',msg =>{
     }
 });
 
-//schedule work
-const schedule = require('node-schedule');
-const reminder = (group_id)=>{
-    schedule.scheduleJob('0 0 10 * * *',()=>{
-        bot.sendMessage(group_id,"午饭吃啥");
-        minus(restaurantCache);
-    });
-    schedule.scheduleJob('0 0 16 * * *',()=>{
-        bot.sendMessage(group_id,"晚饭吃啥");
-        minus(restaurantCache);
-    });
-    schedule.scheduleJob('0 0 19 * * *',()=>{
-        bot.sendMessage(group_id,"ybyb");
-        minus(restaurantCache);
-    });
-    schedule.scheduleJob('0 0 0 * * *',()=>{
-        bot.sendMessage(group_id,"唉又过了一天");
-        minus(restaurantCache);
-    });
+const dailyReminder = require('./reminder')
+if(dailyReminder.reminder(bot,group_id) == -1){
+    minus(restaurantCache);
 }
-reminder(group_id);
 
 // text message and stickers handler
 bot.on(/^[^/].*/, msg => {
