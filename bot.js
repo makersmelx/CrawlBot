@@ -97,49 +97,6 @@ bot.on('/wxhmode',msg =>{
     }
 });
 
-// text message and stickers handler
-bot.on(/^[^/].*/, msg => {
-    if (globalConfig.mode) {
-        let text = msg.text;
-        //special pattern
-        var specialReg = [/.*不许.*/, /(^.*)((\ud83c[\udf00-\udfff])|(\ud83d[\udc00-\ude4f\ude80-\udeff])|[\u2600-\u2B55]).*/];
-        var specialFormat = [`？不许${text}`, `您就是抽象带师？`];
-        for (var i = 0; i < specialReg.length;i++) {
-            if (text.match(specialReg[i])) {
-                return msg.reply.text(specialFormat[i]);
-            }
-        }
-        let probability = globalConfig.probability;
-        let x = Math.floor(Math.random() * 100);
-        if (globalConfig.mode != 2) {
-            if (x > probability) {
-                return null;
-            }
-        }
-        
-        var relpyFormat = [`${text}个几把`, `${text}个屁`, `不许${text.slice(0, 3)}`, "有一说一，确实", `${text}`,`cnm`,`给${exp.random_ye()}整乐了`,`?`,`爬爬爬`];
-        var num = relpyFormat.length + globalConfig.nontextMethods * 1;
-        var choice = Math.floor(num * Math.random());
-
-        if (choice < relpyFormat.length) {
-            return msg.reply.text(relpyFormat[choice]);
-        }
-        else {
-            //remember to modify nontextMethods in config.json
-            switch (choice - relpyFormat.length) {
-                case 0:
-                    return exp.requestZanghua(msg);
-                    break;
-                case 1:
-                    return sendPic(msg);
-                    break;
-                default:
-                    break;
-            }
-        }
-    }
-});
-
 bot.on('sticker', msg => {
     if (globalConfig.mode) {
         let probability = globalConfig.probability;
@@ -234,13 +191,13 @@ bot.on('/sentence',msg => {
     }
 })
 
-bot.on(/^\/setprob(@Jianghbot)?.*$/,msg => {
+bot.on(/^\/setprob(@Jianghbot)?.*$/, msg => {
     if (globalConfig.mode) {
         let rawData = msg.text;
         let splitData = rawData.split(" ", 2);
         var numReg = /^[0-9]+.?[0-9]*/;
         if (!numReg.test(splitData[1])) {
-            return msg.reply.text(`cnm输入不符合格式，给${ exp.random_ye() }重来`);
+            return msg.reply.text(`cnm输入不符合格式，给${exp.random_ye()}重来`);
         }
         globalConfig.probability = splitData[1];
         let displayContent = `今、${exp.random_ye()}の嘴臭probaility is ${splitData[1]}\n`
@@ -250,7 +207,7 @@ bot.on(/^\/setprob(@Jianghbot)?.*$/,msg => {
         return msg.reply.text(displayContent);
         
     }
-})
+});
 
 bot.on('/checkprob', msg => {
     let displayContent = `Current probability: ${globalConfig.probability}`;
@@ -258,10 +215,55 @@ bot.on('/checkprob', msg => {
         displayContent += `\nお知らせ：現在、${exp.random_ye()}の活動確率か高いで、ご注意ください`
     }
     return msg.reply.text(displayContent);
-})
+});
 
 bot.on('/hello', msg => {
     return exp.requestZanghua(msg);
-})
+});
+
+// text message and stickers handler
+bot.on(/^[^/].*/, msg => {
+    if (globalConfig.mode) {
+        let text = msg.text;
+        //special pattern
+        var specialReg = [/.*不许.*/, /(^.*)((\ud83c[\udf00-\udfff])|(\ud83d[\udc00-\ude4f\ude80-\udeff])|[\u2600-\u2B55]).*/];
+        var specialFormat = [`？不许${text}`, `您就是抽象带师？`];
+        for (var i = 0; i < specialReg.length;i++) {
+            if (text.match(specialReg[i])) {
+                return msg.reply.text(specialFormat[i]);
+            }
+        }
+        let probability = globalConfig.probability;
+        let x = Math.floor(Math.random() * 100);
+        if (globalConfig.mode != 2) {
+            if (x > probability) {
+                return null;
+            }
+        }
+        
+        var relpyFormat = [`${text}个几把`, `${text}个屁`, `不许${text.slice(0, 3)}`, "有一说一，确实", `${text}`,`cnm`,`给${exp.random_ye()}整乐了`,`?`,`爬爬爬`,`NM$L`,`给${exp.random_ye()}少说两句又不会死`];
+        var num = relpyFormat.length + globalConfig.nontextMethods * 1;
+        var choice = Math.floor(num * Math.random());
+
+        if (choice < relpyFormat.length) {
+            return msg.reply.text(relpyFormat[choice]);
+        }
+        else {
+            //remember to modify nontextMethods in config.json
+            switch (choice - relpyFormat.length) {
+                case 0:
+                    return exp.requestZanghua(msg);
+                    break;
+                case 1:
+                    return sendPic(msg);
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+});
+
+
 
 bot.start();
