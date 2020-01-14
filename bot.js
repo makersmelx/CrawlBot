@@ -25,8 +25,11 @@ const sendPic = (msg) => {
 
 var restaurantList = './database/restaurants.json';
 var sentenceList = './database/sentence.json';
-var configFile = './config.json';
 var picUrlFile = './database/picUrl.json'
+var goodReplyFile = './database/goodReply.json'
+
+var configFile = './config.json';
+
 
 //save json
 const saveJSON = (filename, restaurantCache) =>{
@@ -51,6 +54,7 @@ var globalConfig = require(configFile);
 var restaurantCache = require(restaurantList);
 var sentenceCache = require(sentenceList);
 var picUrlCache = require(picUrlFile);
+var goodReplyCache = require(goodReplyFile);
 
 //record the most speaking man
 var lastTalk = globalConfig.lastTalk;
@@ -240,6 +244,17 @@ bot.on(/^[^/].*/, msg => {
                 return null;
             }
         }
+        else {
+            
+            if(!goodReplyCache.find(function(value,index,arr){
+                return value.content == text;
+            }))
+            {
+                goodReplyCache.push({ "content": text });
+                saveJSON(goodReplyFile,goodReplyCache);
+            }
+            
+        }
         
         var relpyFormat = [`${text}个几把`, `${text}个屁`, `不许${text.slice(0, 3)}`, "有一说一，确实", `${text}`,`cnm`,`给${exp.random_ye()}整乐了`,`?`,`爬爬爬`,`NM$L`,`给${exp.random_ye()}少说两句又不会死`];
         var num = relpyFormat.length + globalConfig.nontextMethods * 1;
@@ -257,6 +272,12 @@ bot.on(/^[^/].*/, msg => {
                 case 1:
                     return sendPic(msg);
                     break;
+                case 2:{
+                    let xy = Math.floor(Math.random() * sentenceCache.length);
+                    return msg.reply.text(sentenceCache[xy].content);
+                    break;
+                }
+                   
                 default:
                     break;
             }
