@@ -1,10 +1,11 @@
 const fs = require('fs');
 var botError = require('./error')
 var exp = require('./abstarctExp')
+const TeleBot = require('telebot');
 
 const group_id = process.env.INTERNAL_GHOST_GROUP_ID;
 var botKey = process.env.TELEBOT_KEY;
-const TeleBot = require('telebot');
+
 const bot = process.env.HOME_PC ==1 ?
     new TeleBot({
         token: botKey,
@@ -45,38 +46,14 @@ const minus = (restaurantCache) =>{
     }
     saveJSON(restaurantList,restaurantCache);
 }
+//json caches
+var globalConfig = require(configFile);
+var restaurantCache = require(restaurantList);
+var sentenceCache = require(sentenceList);
+var picUrlCache = require(picUrlFile);
 
 //record the most speaking man
-var lastTalk = { "id": "0", times: "0" };
-
-// Boot up
-var mode = 1;
-bot.sendMessage(group_id,`${ exp.random_ye() }启动了，快点给${ exp.random_ye() }爬`);
-
-//json caches
-var configCache = require(configFile);
-if(!configCache){
-    bot.sendMessage(group_id,`No configuration file found. ${ exp.random_ye() }歇了`)
-}
-
-var restaurantCache = require('./database/restaurants.json');
-if(!restaurantCache){
-    bot.sendMessage(group_id,"吃你🐎呢，餐馆都没有")
-}
-
-var sentenceCache = require('./database/sentence.json');
-if(!sentenceCache){
-    bot.sendMessage(group_id,`${ exp.random_ye() }语录呢？`)
-}
-
-var picUrlCache = require(picUrlFile);
-if (!picUrlCache) {
-    bot.sendMessage(group_id,`没表情包, ${ exp.random_ye() }歇了`)
-}
-
-// mode swtich
-var modeSwitch = require('./mode');
-mode = modeSwitch.initMode(bot,mode);
+var lastTalk = globalConfig.lastTalk;
 
 //daily reminder
 const dailyReminder = require('./reminder')
@@ -84,90 +61,90 @@ if(dailyReminder.reminder(bot,group_id) == -1){
     minus(restaurantCache);
 }
 
+bot.on('/start',msg => {
+    if(!globalConfig.mode){
+        globalConfig.mode = 1;
+        return msg.reply.text(`${ exp.random_ye() }醒了`);
+    }
+    else if (globalConfig.mode == 1){
+        return msg.reply.text("cnm，干什么");
+    }
+    else if(globalConfig.mode == 2){
+        globalConfig.mode = 1;
+        return msg.reply.text(`歇了，${ exp.random_ye() }正常聊天`);
+    }
+    
+});
+
+bot.on('/end',msg => {
+    if(globalConfig.mode){
+        globalConfig.mode = 0;
+        return msg.reply.text(`${ exp.random_ye() }睡了`);
+    }
+    else{
+        return msg.reply.text("zzz");
+    }
+    
+});
+
+bot.on('/wxhmode',msg =>{
+    if(!globalConfig.mode){
+        return msg.reply.text(`${ exp.random_ye() }累了，不许嘴臭`);
+    }
+    else if(globalConfig.mode == 1){
+        globalConfig.mode = 2;
+        return msg.reply.text("Final mouth chou mode on. Tonight お母さん必死");
+    }
+});
+
 // text message and stickers handler
 bot.on(/^[^/].*/, msg => {
-    var tmp;
-    if (mode) {
-        //刷屏
-        if (lastTalk.id == 0) {
-            lastTalk.id = msg.from.id;
-        }
-        else if(msg.from.id != lastTalk.id)
-        {
-            lastTalk.id = 0;
-            lastTalk.times = 0;
-        }
-        lastTalk.times++;
-    
-        if (lastTalk.times >= 3) {
-            lastTalk.times = 0;
-            return msg.reply.text(`给${exp.random_ye()}少说两句又不会死`);
-        }
-
-        tmp = lastTalk.times;
-        lastTalk.times = 0;
-
+    if (globalConfig.mode) {
         let text = msg.text;
-        //嘴臭judge
-        let probability = configCache.probability;
-        let x = Math.floor(Math.random()*100);
-
-        //config
-        var special = 2;
-
-        //data
-        var specialFormat = [`？不许${ text }`,`您就是抽象带师？`];
-        var relpyFormat = [`${ text }个几把`,`不许${ text }`];
-
-        //parse
+        //special pattern
         var specialReg = [/.*不许.*/, /(^.*)((\ud83c[\udf00-\udfff])|(\ud83d[\udc00-\ude4f\ude80-\udeff])|[\u2600-\u2B55]).*/];
-    
-        //reply
-        if ((x < probability) || (mode == 2)) {
-            if (Math.random() < 0.4) {
-                return exp.requestZanghua(msg);
+        var specialFormat = [`？不许${text}`, `您就是抽象带师？`];
+        for (var i = 0; i < specialReg.length;i++) {
+            if (text.match(specialReg[i])) {
+                return msg.reply.text(specialFormat[i]);
             }
+        }
+        let probability = globalConfig.probability;
+        let x = Math.floor(Math.random() * 100);
+        if (globalConfig.mode != 2) {
+            if (x > probability) {
+                return null;
+            }
+        }
+        
+        var relpyFormat = [`${text}个几把`, `${text}个屁`, `不许${text.slice(0, 3)}`, "有一说一，确实", `${text}`,`cnm`,`给${exp.random_ye()}整乐了`,`?`,`爬爬爬`];
+        var num = relpyFormat.length + globalConfig.nontextMethods * 1;
+        var choice = Math.floor(num * Math.random());
 
-            let choices = 2;
-            let final = Math.floor(Math.random()*choices);
-            //let special = 0;
-            for(var i = 0; i < special;i ++){
-                if(text.match(specialReg[i])){
-                    return msg.reply.text(specialFormat[i]);
-                }
+        if (choice < relpyFormat.length) {
+            return msg.reply.text(relpyFormat[choice]);
+        }
+        else {
+            //remember to modify nontextMethods in config.json
+            switch (choice - relpyFormat.length) {
+                case 0:
+                    return exp.requestZanghua(msg);
+                    break;
+                case 1:
+                    return sendPic(msg);
+                    break;
+                default:
+                    break;
             }
-        
-            if(final == 0){
-                let text = msg.text.slice(0,3);
-                //return bot.sendMessage(group_id, `${ text }个几把`);
-                return msg.reply.text(relpyFormat[final]);
-            }
-            else if(final == 1){
-                return msg.reply.text(`不许${ text }`);
-            }
-            
         }
-        //repeat
-        else if (x < 2 * probability) {
-            return msg.reply.text(msg.text);
-        }
-        else if (x < 3 * probability) {
-            return msg.reply.text(`有一说一，确实`);
-        }
-        else if (x < 4 * probability) {
-            return sendPic(msg);
-        }
-        
     }
-    lastTalk.times = tmp;
-    return null;
 });
 
 bot.on('sticker', msg => {
-    if (mode) {
-        let probability = configCache.probability;
+    if (globalConfig.mode) {
+        let probability = globalConfig.probability;
         let x = Math.floor(Math.random()*100);
-        if(x < probability || mode == 2){
+        if(x < probability / 2 || globalConfig.mode == 2){
             return bot.sendMessage(group_id, `发你麻痹的图呢，爬`);
         }
     }
@@ -176,7 +153,7 @@ bot.on('sticker', msg => {
 
 // self-defined commands
 bot.on('/eatwaht', msg => {
-    if(mode){
+    if(globalConfig.mode){
         while(true){
             let decision = Math.floor(Math.random()*restaurantCache.length);
             if(restaurantCache[decision].times > 1){
@@ -190,17 +167,18 @@ bot.on('/eatwaht', msg => {
 });
 
 bot.on(/^\/addplace(@Jianghbot)?.*$/,msg => {
-    if(mode){
+    if(globalConfig.mode){
         let rawData = msg.text;
         let splitData = rawData.split(" ",2);
-        console.log(splitData);
         let newPlace =  splitData[1];
         if(!restaurantCache.find(function(value,index,arr){
             return value.name == newPlace;
         }))
         {
+            if (newPlace == "") {
+                return msg.reply.text(`?`);
+            }
             restaurantCache.push({"name":newPlace,"times":"0"});
-            //console.log(restaurantCache);
             saveJSON(restaurantList,restaurantCache);
             return msg.reply.text(`${ newPlace }, 这个新地方${ exp.random_ye() }记住了`);
         }
@@ -212,7 +190,7 @@ bot.on(/^\/addplace(@Jianghbot)?.*$/,msg => {
 
 
 bot.on('/eatplace',msg=>{
-    if(mode){
+    if(globalConfig.mode){
         var str = '现在你群约饭地点有:\n';
         for(var i in restaurantCache){
             let tmpName = restaurantCache[i].name;
@@ -226,7 +204,7 @@ bot.on('/eatplace',msg=>{
 })
 
 bot.on(/^\/zhenghuo(@Jianghbot)?.*$/,msg => {
-    if(mode){
+    if(globalConfig.mode){
         let rawData = msg.text;
         let splitData = rawData.split(" ",2);
         if(!sentenceCache.find(function(value,index,arr){
@@ -250,23 +228,23 @@ bot.on(/^\/zhenghuo(@Jianghbot)?.*$/,msg => {
 })
 
 bot.on('/sentence',msg => {
-    if(mode){
+    if(globalConfig.mode){
         let x = Math.floor(Math.random() * sentenceCache.length);
         return msg.reply.text(sentenceCache[x].content);
     }
 })
 
 bot.on(/^\/setprob(@Jianghbot)?.*$/,msg => {
-    if (mode) {
+    if (globalConfig.mode) {
         let rawData = msg.text;
         let splitData = rawData.split(" ", 2);
         var numReg = /^[0-9]+.?[0-9]*/;
         if (!numReg.test(splitData[1])) {
             return msg.reply.text(`cnm输入不符合格式，给${ exp.random_ye() }重来`);
         }
-        configCache.probability = splitData[1];
+        globalConfig.probability = splitData[1];
         let displayContent = `今、${exp.random_ye()}の嘴臭probaility is ${splitData[1]}\n`
-        if (splitData[1] > 10) {
+        if (splitData[1] > globalConfig.discontentProb * 1) {
             displayContent += `\nWarning: Too high probabilty. ${exp.random_ye()} may casue dissatisfaction.`
         }
         return msg.reply.text(displayContent);
@@ -275,8 +253,8 @@ bot.on(/^\/setprob(@Jianghbot)?.*$/,msg => {
 })
 
 bot.on('/checkprob', msg => {
-    let displayContent = `Current probability: ${configCache.probability}.\n实际互动强度为: ${4 * configCache.probability}\n`;
-    if (configCache.probability > 10) {
+    let displayContent = `Current probability: ${globalConfig.probability}`;
+    if (globalConfig.probability > globalConfig.discontentProb * 1) {
         displayContent += `\nお知らせ：現在、${exp.random_ye()}の活動確率か高いで、ご注意ください`
     }
     return msg.reply.text(displayContent);

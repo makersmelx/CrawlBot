@@ -1,0 +1,1 @@
+ssh -o "ProxyCommand nc -X 5 -x 127.0.0.1:1080 %h %p" -i "~/.ssh/ssh.pem" ubuntu@ec2-3-89-9-9.compute-1.amazonaws.com
