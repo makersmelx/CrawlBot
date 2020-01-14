@@ -3,12 +3,16 @@ const fs = require('fs');
 const group_id = process.env.INTERNAL_GHOST_GROUP_ID;
 var botKey = process.env.TELEBOT_KEY;
 const TeleBot = require('telebot');
-const bot = new TeleBot({
-    token: botKey,
-    polling: {
-        proxy:'socks5://127.0.0.1:1080'
-    }
-});
+const bot = process.env.HOME_PC ==1 ?
+    new TeleBot({
+        token: botKey,
+        polling: {
+            proxy:'socks5://127.0.0.1:1080'
+        }
+    }):
+    new TeleBot({
+        token: botKey,
+    });
 
 //嘴臭api
 var normal = process.env.KOU_TU_LIAN_HUA;
