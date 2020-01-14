@@ -1,5 +1,6 @@
 require('dotenv').config();
 const fs = require('fs');
+var botError = require('./error')
 const group_id = process.env.INTERNAL_GHOST_GROUP_ID;
 var botKey = process.env.TELEBOT_KEY;
 const TeleBot = require('telebot');
@@ -18,25 +19,25 @@ const bot = process.env.HOME_PC ==1 ?
 var normal = process.env.KOU_TU_LIAN_HUA;
 var fire = process.env.HUO_LI_QUAN_KAI;
 
-const requestZanghua = () => {
+const requestZanghua = (msg) => {
     var request = require('request');
     if (Math.random() < 0.3) {
         request(fire, function (err, response, content) {
             if (err) {
-                console.log("Failure.");
+                botError.errorHandle('API');
             }
             else {
-                return bot.sendMessage(group_id, content);
+                return msg.reply.text(content);
             }
         })
-    }  
+    } 
     else {
         request(normal, function (err, response, content) {
             if (err) {
-                console.log("Failure.");
+                botError.errorHandle('API');
             }
             else {
-                return bot.sendMessage(group_id, content);
+                return msg.reply.text(content);
             }
         })
     }
@@ -57,7 +58,7 @@ const saveJSON = (filename, restaurantCache) =>{
     let data = JSON.stringify(restaurantCache,null,4);
     fs.writeFile(filename,data,(err) =>{
         if(err){
-            bot.sendMessage(group_id,"爬啊吴小黑，JSON文件存储失败")
+            botError.errorHandle('JSON write');
         }
     });
 }
@@ -206,7 +207,7 @@ bot.on(/^[^/].*/, msg => {
         //reply
         if ((x < probability) || (mode == 2)) {
             if (Math.random() < 0.4) {
-                return requestZanghua();
+                return requestZanghua(msg);
             }
 
             let choices = 2;
@@ -364,7 +365,7 @@ bot.on('/checkprob', msg => {
 })
 
 bot.on('/hello', msg => {
-    return requestZanghua();
+    return requestZanghua(msg);
 })
 
 bot.start();
