@@ -112,41 +112,41 @@ if (!picUrlCache) {
 bot.on('/start',msg => {
     if(!mode){
         mode = true;
-        return bot.sendMessage(group_id,`${ random_ye() }醒了`);
+        return msg.reply.text(`${ random_ye() }醒了`);
     }
     else if (mode == 1){
-        return bot.sendMessage(group_id,"cnm，干什么");
+        return msg.reply.text("cnm，干什么");
     }
     else if(mode == 2){
         mode = 1;
-        return bot.sendMessage(group_id,`歇了，${ random_ye() }正常聊天`);
+        return msg.reply.text(`歇了，${ random_ye() }正常聊天`);
     }
 });
 
 bot.on('/end',msg => {
     if(mode){
         mode = 0;
-        return bot.sendMessage(group_id,`${ random_ye() }睡了`);
+        return msg.reply.text(`${ random_ye() }睡了`);
     }
     else{
-        return bot.sendMessage(group_id,"zzz");
+        return msg.reply.text("zzz");
     }
     
 });
 
 bot.on('/wxhmode',msg =>{
     if(!mode){
-        return bot.sendMessage(group_id,`${ random_ye() }累了，不许嘴臭`);
+        return msg.reply.text(`${ random_ye() }累了，不许嘴臭`);
     }
     else if(mode == 1){
         mode = 2;
-        return bot.sendMessage(group_id,"Final mouth chou mode on. Tonight お母さん必死");
+        return msg.reply.text("Final mouth chou mode on. Tonight お母さん必死");
     }
 });
 
 //schedule work
 const schedule = require('node-schedule');
-const reminder = ()=>{
+const reminder = (group_id)=>{
     schedule.scheduleJob('0 0 10 * * *',()=>{
         bot.sendMessage(group_id,"午饭吃啥");
         minus(restaurantCache);
@@ -164,7 +164,7 @@ const reminder = ()=>{
         minus(restaurantCache);
     });
 }
-reminder();
+reminder(group_id);
 
 // text message and stickers handler
 bot.on(/^[^/].*/, msg => {
@@ -183,7 +183,7 @@ bot.on(/^[^/].*/, msg => {
     
         if (lastTalk.times >= 3) {
             lastTalk.times = 0;
-            return bot.sendMessage(group_id, `给${random_ye()}少说两句又不会死`);
+            return msg.reply.text(`给${random_ye()}少说两句又不会死`);
         }
 
         tmp = lastTalk.times;
@@ -215,26 +215,26 @@ bot.on(/^[^/].*/, msg => {
             //let special = 0;
             for(var i = 0; i < special;i ++){
                 if(text.match(specialReg[i])){
-                    return bot.sendMessage(group_id,specialFormat[i]);
+                    return msg.reply.text(specialFormat[i]);
                 }
             }
         
             if(final == 0){
                 let text = msg.text.slice(0,3);
                 //return bot.sendMessage(group_id, `${ text }个几把`);
-                return bot.sendMessage(group_id, relpyFormat[final]);
+                return msg.reply.text(relpyFormat[final]);
             }
             else if(final == 1){
-                return bot.sendMessage(group_id, `不许${ text }`);
+                return msg.reply.text(`不许${ text }`);
             }
             
         }
         //repeat
         else if (x < 2 * probability) {
-            return bot.sendMessage(group_id, msg.text);
+            return msg.reply.text(msg.text);
         }
         else if (x < 3 * probability) {
-            return bot.sendMessage(group_id, `有一说一，确实`);
+            return msg.reply.text(`有一说一，确实`);
         }
         else if (x < 4 * probability) {
             return sendPic(msg);
@@ -265,7 +265,7 @@ bot.on('/eatwaht', msg => {
                 continue;
             }else{
                 restaurantCache[decision].times ++;
-                return bot.sendMessage(group_id, `这顿吃${ restaurantCache[decision].name },不许🇫🇷`);
+                return msg.reply.text(`这顿吃${ restaurantCache[decision].name },不许🇫🇷`);
             }
         }   
     }
@@ -284,10 +284,10 @@ bot.on(/^\/addplace(@Jianghbot)?.*$/,msg => {
             restaurantCache.push({"name":newPlace,"times":"0"});
             //console.log(restaurantCache);
             saveJSON(restaurantList,restaurantCache);
-            return bot.sendMessage(group_id,`${ newPlace }, 这个新地方${ random_ye() }记住了`);
+            return msg.reply.text(`${ newPlace }, 这个新地方${ random_ye() }记住了`);
         }
         else{
-            return bot.sendMessage(group_id,"有这地了");
+            return msg.reply.text("有这地了");
         }
     }
 })
@@ -304,7 +304,7 @@ bot.on('/eatplace',msg=>{
         }
         str = str + `一共🇫🇷了x次`
     }
-    return bot.sendMessage(group_id,str);
+    return msg.reply.text(str);
 })
 
 bot.on(/^\/zhenghuo(@Jianghbot)?.*$/,msg => {
@@ -318,15 +318,15 @@ bot.on(/^\/zhenghuo(@Jianghbot)?.*$/,msg => {
             if (splitData[1]) {
                 sentenceCache.push({"content":splitData[1]});
                 saveJSON(sentenceList,sentenceCache);
-                return bot.sendMessage(group_id,`整挺好, ${ random_ye() }下回出来迫害`);
+                return msg.reply.text(`整挺好, ${ random_ye() }下回出来迫害`);
             }
             else {
-                return bot.sendMessage(group_id,`你发的什么鸡掰, 给${ random_ye() }说人话`);
+                return msg.reply.text(`你发的什么鸡掰, 给${ random_ye() }说人话`);
             }
            
         }
         else{
-            return bot.sendMessage(group_id,`妈的多老的东西了，你还让${ random_ye() }学`);
+            return msg.reply.text(`妈的多老的东西了，你还让${ random_ye() }学`);
         }
     }
 })
@@ -334,7 +334,7 @@ bot.on(/^\/zhenghuo(@Jianghbot)?.*$/,msg => {
 bot.on('/sentence',msg => {
     if(mode){
         let x = Math.floor(Math.random() * sentenceCache.length);
-        return bot.sendMessage(group_id,sentenceCache[x].content);
+        return msg.reply.text(sentenceCache[x].content);
     }
 })
 
@@ -344,14 +344,14 @@ bot.on(/^\/setprob(@Jianghbot)?.*$/,msg => {
         let splitData = rawData.split(" ", 2);
         var numReg = /^[0-9]+.?[0-9]*/;
         if (!numReg.test(splitData[1])) {
-            return bot.sendMessage(group_id,`cnm输入不符合格式，给${ random_ye() }重来`);
+            return msg.reply.text(`cnm输入不符合格式，给${ random_ye() }重来`);
         }
         configCache.probability = splitData[1];
         let displayContent = `今、${random_ye()}の嘴臭probaility is ${splitData[1]}\n`
         if (splitData[1] > 10) {
             displayContent += `\nWarning: Too high probabilty. ${random_ye()} may casue dissatisfaction.`
         }
-        return bot.sendMessage(group_id,displayContent);
+        return msg.reply.text(displayContent);
         
     }
 })
@@ -361,7 +361,7 @@ bot.on('/checkprob', msg => {
     if (configCache.probability > 10) {
         displayContent += `\nお知らせ：現在、${random_ye()}の活動確率か高いで、ご注意ください`
     }
-    return bot.sendMessage(group_id, displayContent);
+    return msg.reply.text(displayContent);
 })
 
 bot.on('/hello', msg => {
