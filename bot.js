@@ -24,7 +24,7 @@ const sendSticker = (msg) => {
 }
 
 const sendGif = (msg) => {
-    let decision = Math.floor(Math.random()*stickeridCache.length);
+    let decision = Math.floor(Math.random()*gifCache.length);
     return bot.sendDocument(msg.chat.id, gifCache[decision].id);
 }
 
