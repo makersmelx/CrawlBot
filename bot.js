@@ -50,6 +50,17 @@ const minus = (restaurantCache) =>{
     }
     saveJSON(restaurantList,restaurantCache);
 }
+
+const checkAcess = (msg)=>{
+    if(msg.chat.id != process.env.INTERNAL_GHOST_GROUP_ID){
+        msg.reply.text(`Error: 不允许私聊改变${exp.random_ye()}的美丽`);
+        return false;
+    }
+    else{
+        return true;
+    }
+}
+
 //json caches
 var globalConfig = require(configFile);
 var restaurantCache = require(restaurantList);
@@ -146,7 +157,6 @@ bot.on('/eatplace',msg=>{
         for(var i in restaurantCache){
             let tmpName = restaurantCache[i].name;
             let tmpTime = restaurantCache[i].times;
-            //console.log(i);
             str = str + tmpName + "，最近选择了" + tmpTime + "次\n";
         }
         str = str + `一共🇫🇷了x次`
@@ -187,6 +197,9 @@ bot.on('/sentence',msg => {
 
 bot.on(/^\/setprob(@Jianghbot)?.*$/, msg => {
     if (globalConfig.mode) {
+        if(!checkAcess(msg)){
+            return;
+        }
         let rawData = msg.text;
         let splitData = rawData.split(" ", 2);
         var numReg = /^[0-9]+.?[0-9]*/;
@@ -242,9 +255,6 @@ bot.on('sticker', msg => {
 // text message and stickers handler
 bot.on(/^[^/].*/, msg => {
     if (globalConfig.mode) {
-        if(msg.sticker){
-            console.log(test)
-        }
         let text = msg.text;
         let probability = globalConfig.probability;
         let x = Math.floor(Math.random() * 100);
@@ -265,7 +275,7 @@ bot.on(/^[^/].*/, msg => {
             
         }
         
-        var relpyFormat = [`${text}个几把`, `${text}个屁`, `不许${text.slice(0, 3)}`, "你说你🐴呢？", "有一说一确实",`${text}`,`cnm`,`给${exp.random_ye()}整乐了`,`?`,`爬爬爬`,`NM$L`,`给${exp.random_ye()}少说两句又不会死`];
+        var relpyFormat = [`${text}个几把`, `你慢慢${text}``${text}个屁`, `不许${text.slice(0, 4)}`, "你说你🐴呢？", "有一说一确实",`${text}`,`cnm`,`给${exp.random_ye()}整乐了`,`?`,`爬爬爬`,`NM$L`,`给${exp.random_ye()}少说两句又不会死`];
         var num = relpyFormat.length + globalConfig.nontextMethods * 1;
         var choice = Math.floor(num * Math.random());
 
