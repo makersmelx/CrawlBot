@@ -337,8 +337,9 @@ bot.on(/^[^/].*/, msg => {
             }
             
         }
+        var nontextMethods = 9;
         var relpyFormat = [`${text}个几把`, `你慢慢${text}`,`${text}个屁`, `不许${text.slice(0, 4)}`, "你说你🐴呢？", "有一说一确实",`${text}`,`cnm`,`给${exp.random_ye()}整乐了`,`?`,`爬爬爬`,`NM$L`,`给${exp.random_ye()}少说两句又不会死`];
-        var num = relpyFormat.length + globalConfig.nontextMethods * 1;
+        var num = relpyFormat.length + nontextMethods;
         var choice = Math.floor(num * Math.random());
 
         if (choice < relpyFormat.length) {
