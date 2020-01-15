@@ -1,5 +1,4 @@
 const fs = require('fs');
-var co = require('co')
 var botError = require('./error')
 var exp = require('./abstarctExp')
 const TeleBot = require('telebot');
@@ -24,6 +23,11 @@ const sendSticker = (msg) => {
     return msg.reply.sticker(stickeridCache[decision].id);
 }
 
+const sendGif = (msg) => {
+    let decision = Math.floor(Math.random()*stickeridCache.length);
+    return bot.sendDocument(msg.chat.id, gifCache[decision].id);
+}
+
 var restaurantList = './database/restaurants.json';
 var restaurantCache = require(restaurantList);
 
@@ -41,6 +45,9 @@ var globalConfig = require(configFile);
 
 var goodReplyFile = './database/goodReply.json'
 var goodReplyCache = require(goodReplyFile);
+
+var gifFile = './database/gif.json'
+var gifCache = require(gifFile);
 
 
 //save json
@@ -236,12 +243,13 @@ bot.on('/hello', msg => {
 
 bot.on('sticker', msg => {
     if (globalConfig.mode) {
-        co(function *() {
-            //var file = yield bot.getFile(msg.sticker.file_id);
+        if(!stickeridCache.find(function(value,index,arr) {
+            return value.id == msg.sticker.file_id;
+        }))
+        {
             stickeridCache.push({"id":`${msg.sticker.file_id}`});
             saveJSON(stickeridFile,stickeridCache);
-        })
-        
+        }
         
         let probability = globalConfig.probability;
         let x = Math.floor(Math.random()*100);
@@ -258,22 +266,52 @@ bot.on('sticker', msg => {
     
 });
 
-bot.on(/问：.*\n答：.*/,msg=>{
-    var reg = /[(问：)(\n)(答：)]/
-    var text = msg.text;
-    var split = text.split(reg);
-    if(split[2].length < 3){
-        return msg.reply.text(`问句太短，${exp.random_ye()}不学`)
+bot.on('*', msg => {
+    if (msg.animation) {
+        if(!gifCache.find(function(value,index,arr) {
+            return value.id == msg.animation.file_id;
+        }))
+        {
+            gifCache.push({"id":`${msg.animation.file_id}`});
+            saveJSON(gifFile,gifCache);
+        }
+        let probability = globalConfig.probability;
+        let x = Math.floor(Math.random()*100);
+        if(x < probability / 2 || globalConfig.mode == 2){
+            if(Math.random() < 0.5){
+                return msg.reply.text(`发你麻痹的图呢，爬`);
+            }
+            else{
+                return sendGif(msg);
+            }
+            
+        }
+        
     }
-    problemCache.push({"ask":split[2],"answer":split[5]});
-    saveJSON(problemFile,problemCache);
-    return msg.reply.text(`${exp.random_ye()}学会了`)
-})
+    else if (msg.text) {
+        return;
+    }
+    
+});
 
 // text message and stickers handler
 bot.on(/^[^/].*/, msg => {
+  
     if (globalConfig.mode) {
         let text = msg.text;
+
+        var matchReg = /问：.*\n答：.*/;
+        if (text.match(matchReg)) {
+            var reg = /[(问：)(\n)(答：)]/
+            var split = text.split(reg);
+            if(split[2].length < 3){
+                return msg.reply.text(`问句太短，${exp.random_ye()}不学`)
+            }
+            problemCache.push({ "ask": split[2], "answer": split[5] });
+            saveJSON(problemFile,problemCache);
+            return msg.reply.text(`${exp.random_ye()}学会了`)
+        }
+
         let ret = problemCache.find(function(value,index,arr){
             return value.ask == text;
         });
@@ -324,7 +362,9 @@ bot.on(/^[^/].*/, msg => {
                 case 1:case 2:case 3:
                     return sendSticker(msg);
                     break;
-                   
+                case 6: case 7: case 8:
+                    return sendGif(msg);
+                    break;
                 default:
                     break;
             }
