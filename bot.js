@@ -1,4 +1,5 @@
 const fs = require('fs');
+var co = require('co')
 var botError = require('./error')
 var exp = require('./abstarctExp')
 const TeleBot = require('telebot');
@@ -18,14 +19,14 @@ const bot = process.env.HOME_PC ==1 ?
     });
 
 
-const sendPic = (msg) => {
-    let decision = Math.floor(Math.random()*picUrlCache.length);
-    return msg.reply.photo(picUrlCache[decision].url);
+const sendSticker = (msg) => {
+    let decision = Math.floor(Math.random()*stickeridCache.length);
+    return msg.reply.sticker(stickeridCache[decision].id);
 }
 
 var restaurantList = './database/restaurants.json';
 var sentenceList = './database/sentence.json';
-var picUrlFile = './database/picUrl.json'
+var stickeridFile = './database/stickerid.json'
 var goodReplyFile = './database/goodReply.json'
 
 var configFile = './config.json';
@@ -53,7 +54,7 @@ const minus = (restaurantCache) =>{
 var globalConfig = require(configFile);
 var restaurantCache = require(restaurantList);
 var sentenceCache = require(sentenceList);
-var picUrlCache = require(picUrlFile);
+var stickeridCache = require(stickeridFile);
 var goodReplyCache = require(goodReplyFile);
 
 //record the most speaking man
@@ -99,17 +100,6 @@ bot.on('/wxhmode',msg =>{
         globalConfig.mode = 2;
         return msg.reply.text("Final mouth chou mode on. Tonight お母さん必死");
     }
-});
-
-bot.on('sticker', msg => {
-    if (globalConfig.mode) {
-        let probability = globalConfig.probability;
-        let x = Math.floor(Math.random()*100);
-        if(x < probability / 2 || globalConfig.mode == 2){
-            return bot.sendMessage(group_id, `发你麻痹的图呢，爬`);
-        }
-    }
-    
 });
 
 // self-defined commands
@@ -225,18 +215,37 @@ bot.on('/hello', msg => {
     return exp.requestZanghua(msg);
 });
 
+bot.on('sticker', msg => {
+    if (globalConfig.mode) {
+        co(function *() {
+            //var file = yield bot.getFile(msg.sticker.file_id);
+            stickeridCache.push({"id":`${msg.sticker.file_id}`});
+            saveJSON(stickeridFile,stickeridCache);
+        })
+        
+        
+        let probability = globalConfig.probability;
+        let x = Math.floor(Math.random()*100);
+        if(x < probability / 2 || globalConfig.mode == 2){
+            if(Math.random() < 0.5){
+                return msg.reply.text(`发你麻痹的图呢，爬`);
+            }
+            else{
+                return sendSticker(msg);
+            }
+            
+        }
+    }
+    
+});
+
 // text message and stickers handler
 bot.on(/^[^/].*/, msg => {
     if (globalConfig.mode) {
-        let text = msg.text;
-        //special pattern
-        var specialReg = [/.*不许.*/, /(^.*)((\ud83c[\udf00-\udfff])|(\ud83d[\udc00-\ude4f\ude80-\udeff])|[\u2600-\u2B55]).*/];
-        var specialFormat = [`？不许${text}`, `您就是抽象带师？`];
-        for (var i = 0; i < specialReg.length;i++) {
-            if (text.match(specialReg[i])) {
-                return msg.reply.text(specialFormat[i]);
-            }
+        if(msg.sticker){
+            console.log(test)
         }
+        let text = msg.text;
         let probability = globalConfig.probability;
         let x = Math.floor(Math.random() * 100);
         if (globalConfig.mode != 2) {
@@ -256,7 +265,7 @@ bot.on(/^[^/].*/, msg => {
             
         }
         
-        var relpyFormat = [`${text}个几把`, `${text}个屁`, `不许${text.slice(0, 3)}`, "有一说一，确实", `${text}`,`cnm`,`给${exp.random_ye()}整乐了`,`?`,`爬爬爬`,`NM$L`,`给${exp.random_ye()}少说两句又不会死`];
+        var relpyFormat = [`${text}个几把`, `${text}个屁`, `不许${text.slice(0, 3)}`, "你说你🐴呢？", "有一说一确实",`${text}`,`cnm`,`给${exp.random_ye()}整乐了`,`?`,`爬爬爬`,`NM$L`,`给${exp.random_ye()}少说两句又不会死`];
         var num = relpyFormat.length + globalConfig.nontextMethods * 1;
         var choice = Math.floor(num * Math.random());
 
@@ -266,17 +275,21 @@ bot.on(/^[^/].*/, msg => {
         else {
             //remember to modify nontextMethods in config.json
             switch (choice - relpyFormat.length) {
-                case 0:
+                case 5:{
+                    var specialReg = [/.*不许.*/, /(^.*)((\ud83c[\udf00-\udfff])|(\ud83d[\udc00-\ude4f\ude80-\udeff])|[\u2600-\u2B55]).*/];
+                    var specialFormat = [`？不许${text}`, `您就是抽象带师？`];
+                    for (var i = 0; i < specialReg.length;i++) {
+                        if (text.match(specialReg[i])) {
+                            return msg.reply.text(specialFormat[i]);
+                        }
+                    }
+                }
+                case 0:case4:
                     return exp.requestZanghua(msg);
                     break;
-                case 1:
-                    return sendPic(msg);
+                case 1:case 2:case 3:
+                    return sendSticker(msg);
                     break;
-                case 2:{
-                    let xy = Math.floor(Math.random() * sentenceCache.length);
-                    return msg.reply.text(sentenceCache[xy].content);
-                    break;
-                }
                    
                 default:
                     break;
@@ -284,7 +297,5 @@ bot.on(/^[^/].*/, msg => {
         }
     }
 });
-
-
 
 bot.start();
