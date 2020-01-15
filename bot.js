@@ -25,11 +25,22 @@ const sendSticker = (msg) => {
 }
 
 var restaurantList = './database/restaurants.json';
+var restaurantCache = require(restaurantList);
+
 var sentenceList = './database/sentence.json';
+var sentenceCache = require(sentenceList);
+
 var stickeridFile = './database/stickerid.json'
-var goodReplyFile = './database/goodReply.json'
+var stickeridCache = require(stickeridFile);
+
+var problemFile = './database/problem.json'
+var problemCache = require(problemFile);
 
 var configFile = './config.json';
+var globalConfig = require(configFile);
+
+var goodReplyFile = './database/goodReply.json'
+var goodReplyCache = require(goodReplyFile);
 
 
 //save json
@@ -61,12 +72,7 @@ const checkAcess = (msg)=>{
     }
 }
 
-//json caches
-var globalConfig = require(configFile);
-var restaurantCache = require(restaurantList);
-var sentenceCache = require(sentenceList);
-var stickeridCache = require(stickeridFile);
-var goodReplyCache = require(goodReplyFile);
+
 
 //record the most speaking man
 var lastTalk = globalConfig.lastTalk;
@@ -252,10 +258,29 @@ bot.on('sticker', msg => {
     
 });
 
+bot.on(/问：.*\n答：.*/,msg=>{
+    var reg = /[(问：)(\n)(答：)]/
+    var text = msg.text;
+    var split = text.split(reg);
+    if(split[2].length < 3){
+        return msg.reply.text(`问句太短，${exp.random_ye()}不学`)
+    }
+    problemCache.push({"ask":split[2],"answer":split[5]});
+    saveJSON(problemFile,problemCache);
+    return msg.reply.text(`${exp.random_ye()}学会了`)
+})
+
 // text message and stickers handler
 bot.on(/^[^/].*/, msg => {
     if (globalConfig.mode) {
         let text = msg.text;
+        let ret = problemCache.find(function(value,index,arr){
+            return value.ask == text;
+        });
+        if(ret){
+            return msg.reply.text(ret.answer);
+        }
+            
         let probability = globalConfig.probability;
         let x = Math.floor(Math.random() * 100);
         if (globalConfig.mode != 2) {
