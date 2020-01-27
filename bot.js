@@ -85,10 +85,10 @@ const checkAcess = (msg)=>{
 var lastTalk = globalConfig.lastTalk;
 
 //daily reminder
-const dailyReminder = require('./reminder')
-if(dailyReminder.reminder(bot,group_id) == -1){
-    minus(restaurantCache);
-}
+// const dailyReminder = require('./reminder')
+// if(dailyReminder.reminder(bot,group_id) == -1){
+//     minus(restaurantCache);
+// }
 
 bot.on('/start',msg => {
     if(!globalConfig.mode){
